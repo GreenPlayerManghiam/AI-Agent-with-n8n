@@ -1,0 +1,418 @@
+{
+  "name": "Unified Notification Agent (Gmail, Telegram, Twitter)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Unified Notification Agent\n\nPulls new activity from Gmail, Telegram, and Twitter/X, normalizes each into a common shape:\n`{ platform, title, message, timestamp, link }`\nthen forwards everything as one alert email via Gmail.\n\n**Before running:**\n1. Attach your credentials to every node below (Gmail OAuth2, Telegram Bot API, Twitter Bearer Token).\n2. Set your real email address in the final 'Send Unified Alert' node.\n3. Replace `1229005646625820673` with your correct Twitter User ID in the HTTP Request node if needed.",
+        "height": 300,
+        "width": 420
+      },
+      "id": "323257a7-556d-4ebb-bc64-0299209ce15c",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "id": "af98b045-0422-403e-bbb3-20b0e2c7ea68",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DvoqgUovuMxRNZNl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "platform",
+              "type": "string",
+              "value": "Gmail"
+            },
+            {
+              "id": "2",
+              "name": "title",
+              "type": "string",
+              "value": "={{$json.subject}}"
+            },
+            {
+              "id": "3",
+              "name": "message",
+              "type": "string",
+              "value": "={{$json.snippet}}"
+            },
+            {
+              "id": "4",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{$json.internalDate}}"
+            },
+            {
+              "id": "5",
+              "name": "link",
+              "type": "string",
+              "value": "={{'https://mail.google.com/mail/u/0/#inbox/' + $json.id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5ac25d05-5508-4743-a454-43069f7a4ef4",
+      "name": "Format Gmail",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        256,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "316a7f30-2aad-48aa-ad87-bbc4a1d8716c",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        256
+      ],
+      "webhookId": "af1d16e8-4301-42f8-89a8-b6ca897263ba",
+      "credentials": {
+        "telegramApi": {
+          "id": "wDJFPGKlmqCEwOsQ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "platform",
+              "type": "string",
+              "value": "Telegram"
+            },
+            {
+              "id": "2",
+              "name": "title",
+              "type": "string",
+              "value": "={{$json.message.chat.title || $json.message.from.first_name}}"
+            },
+            {
+              "id": "3",
+              "name": "message",
+              "type": "string",
+              "value": "={{$json.message.text}}"
+            },
+            {
+              "id": "4",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{$json.message.date}}"
+            },
+            {
+              "id": "5",
+              "name": "link",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3cd7d997-c211-40ce-8bee-640b6a6ab75b",
+      "name": "Format Telegram",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        256,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "f1e4f478-5fc1-46c8-90b9-2137a656156d",
+      "name": "Every 5 Min (Twitter)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.x.com/2/users/1229005646625820673/mentions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth2Api",
+        "options": {}
+      },
+      "id": "0944c54a-90fc-4f94-8ce9-e3950852532b",
+      "name": "Get Twitter Mentions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        256,
+        496
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "gAByPQo8gsuVSXX7",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "bafc19e4-83e8-47e6-90e7-835b8cf2305d",
+      "name": "Split Tweets",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        448,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "platform",
+              "type": "string",
+              "value": "Twitter/X"
+            },
+            {
+              "id": "2",
+              "name": "title",
+              "type": "string",
+              "value": "New mention"
+            },
+            {
+              "id": "3",
+              "name": "message",
+              "type": "string",
+              "value": "={{$json.text}}"
+            },
+            {
+              "id": "4",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{$json.created_at}}"
+            },
+            {
+              "id": "5",
+              "name": "link",
+              "type": "string",
+              "value": "={{'https://twitter.com/i/web/status/' + $json.id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f9b268c9-bfad-477c-b510-5e3f6ebcb48a",
+      "name": "Format Twitter",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "df575378-f71a-4df5-a04d-6c7f4218f890",
+      "name": "Merge All Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        896,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "manghiamknongsiej@gmail.com",
+        "subject": "=🔔 {{$json.platform}} notification: {{$json.title}}",
+        "emailType": "text",
+        "message": "={{$json.message}}\n\nTime: {{$json.timestamp}}\nLink: {{$json.link}}",
+        "options": {}
+      },
+      "id": "a1b52827-003a-4fe6-9f72-684b5212f4ec",
+      "name": "Send Unified Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1136,
+        256
+      ],
+      "webhookId": "9241ea57-b2ff-4819-a9f2-774a122f0f1b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DvoqgUovuMxRNZNl",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Gmail": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Telegram": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Every 5 Min (Twitter)": {
+      "main": [
+        [
+          {
+            "node": "Get Twitter Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Twitter Mentions": {
+      "main": [
+        [
+          {
+            "node": "Split Tweets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Tweets": {
+      "main": [
+        [
+          {
+            "node": "Format Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Twitter": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge All Sources": {
+      "main": [
+        [
+          {
+            "node": "Send Unified Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7d053272-71a9-4c31-addb-2160770c1d17",
+  "meta": {
+    "instanceId": "a471b30d7f6b8483c9ea62d5319a30eb52928e55594123728fe8160a5e3e6265"
+  },
+  "nodeGroups": [],
+  "id": "bevOXLjKGZnlmDX5",
+  "tags": []
+}
