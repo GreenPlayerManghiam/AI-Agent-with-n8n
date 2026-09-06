@@ -1,1 +1,1 @@
-Hi, my name is Manghiam Kyrpang Nongsiej and this is my AI Agent Assignment about receiving notifications from Twitter (not working due to Paid Tier Paywall), Telegram and Gmail. 
+Hi, my name is Manghiam Kyrpang Nongsiej and this is my AI Agent Assignment (Bachelor of Computer Applications 1st Year 1st Semester) about receiving notifications from Twitter (not working due to Paid Tier Paywall), Telegram and Gmail. 
