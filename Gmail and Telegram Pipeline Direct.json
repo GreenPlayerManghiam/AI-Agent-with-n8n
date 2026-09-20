@@ -1,0 +1,255 @@
+{
+  "name": "Gmail and Telegram Pipeline Direct",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {}
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "readStatus": "unread"
+        },
+        "options": {}
+      },
+      "id": "79937afa-aee6-478b-993c-22e212f49a49",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        32
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DvoqgUovuMxRNZNl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "platform",
+              "type": "string",
+              "value": "Gmail"
+            },
+            {
+              "id": "2",
+              "name": "title",
+              "type": "string",
+              "value": "={{$json.subject}}"
+            },
+            {
+              "id": "3",
+              "name": "message",
+              "type": "string",
+              "value": "={{$json.snippet}}"
+            },
+            {
+              "id": "4",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{$json.internalDate}}"
+            },
+            {
+              "id": "5",
+              "name": "link",
+              "type": "string",
+              "value": "={{'https://mail.google.com/mail/u/0/#inbox/' + $json.id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "15033514-1e31-42c1-be1e-61c11677a210",
+      "name": "Format Gmail",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "5309e94e-376f-45d9-8251-b933195f5ac4",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        240
+      ],
+      "webhookId": "af1d16e8-4301-42f8-89a8-b6ca897263ba",
+      "credentials": {
+        "telegramApi": {
+          "id": "wDJFPGKlmqCEwOsQ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "platform",
+              "type": "string",
+              "value": "Telegram"
+            },
+            {
+              "id": "2",
+              "name": "title",
+              "type": "string",
+              "value": "={{$json.message.chat.title || $json.message.from.first_name}}"
+            },
+            {
+              "id": "3",
+              "name": "message",
+              "type": "string",
+              "value": "={{$json.message.text}}"
+            },
+            {
+              "id": "4",
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{$json.message.date}}"
+            },
+            {
+              "id": "5",
+              "name": "link",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e0e8166-3534-48f6-81c3-1f343eac19c1",
+      "name": "Format Telegram",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "manghiamknongsiej@gmail.com",
+        "subject": "=Alert [{{ $json.platform }}]",
+        "emailType": "text",
+        "message": "={{ $json.message }}\n\nPlatform: {{ $json.platform }}\nTime: {{ $json.timestamp }}\nLink: {{ $json.link }}",
+        "options": {}
+      },
+      "id": "7b3109b9-cc7c-4b18-ad67-fb074d5d2bf2",
+      "name": "Send Unified Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1328,
+        144
+      ],
+      "webhookId": "b7401bf3-932e-46cf-9da8-a44bcd2ed48d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DvoqgUovuMxRNZNl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "4a384afa-aa19-4ea2-b7c0-9b0f9af497ee",
+      "name": "Merge Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1072,
+        144
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Gmail": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Telegram": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Sources": {
+      "main": [
+        [
+          {
+            "node": "Send Unified Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6ba1bc83-2070-49d9-b97c-2228a3331bea",
+  "meta": {
+    "instanceId": "a471b30d7f6b8483c9ea62d5319a30eb52928e55594123728fe8160a5e3e6265"
+  },
+  "nodeGroups": [],
+  "id": "iugD2xgwpWRbBkWG",
+  "tags": []
+}
